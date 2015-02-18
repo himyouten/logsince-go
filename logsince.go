@@ -162,16 +162,12 @@ func writeLastpos(lastposfile string, lastpos int64) {
 	PrintDebug("DEBUG: %v updated with last pos %v", lastposfile, lastpos)
 }
 
-func getLastpos(logfile string, lastposfile string, start int64, by_byte bool) int64 {
+func getLastpos(logfile string, lastposfile string, start int64) int64 {
 	// Read last location from .filename.logsince hidden file.
 	// Ignore if start is > -1 and use start instead
 	// If size is smaller, start from the beginning
 
-	var default_startpos int64 = 1
-	// if we're doing by bytes and not line count, then start at 0
-	if by_byte {
-		default_startpos = 0
-	}
+	var default_startpos int64 = 0
 
 	var lastpos int64 = 1
 	filestat, err := os.Stat(logfile)
@@ -221,9 +217,6 @@ func getLastpos(logfile string, lastposfile string, start int64, by_byte bool) i
 	}
 
 	lastpos, err = strconv.ParseInt(lastpos_str, 10, 64)
-	if by_byte {
-		lastpos += 1
-	}
 	if err != nil {
 		lastpos = default_startpos
 		PrintDebug("DEBUG: Last pos found cannot be converted to integer, '%v'", lastpos_str)
@@ -396,10 +389,6 @@ func printLogfile(logfile string, lastpos int64, length int) int64 {
 		bytesRead += int64(len(line))
 		PrintDebug("bytesRead:%v", bytesRead)
 	}
-	// if nothing read - move pointer back
-	if bytesRead == 0 {
-		bytesRead = -1
-	}
 
 	return lastpos + bytesRead
 }
@@ -445,7 +434,7 @@ func main() {
 	}()
 
 	// read last location from .filename.logsince hidden file - ignore if start is > -1 and use start instead
-	lastpos := getLastpos(logfile, lastposfile, start, true)
+	lastpos := getLastpos(logfile, lastposfile, start)
 	println(logfile, lastpos, length, lastposfile)
 
 }
